@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoPrint - Print</title><style>*{box-sizing:border-box}body{font-family:Arial;margin:20px;color:#14283b}.toolbar{margin-bottom:18px}.toolbar button{padding:10px 18px;background:#167db5;color:white;border:0;border-radius:8px;font-weight:bold;cursor:pointer}.sheet{display:flex;justify-content:center;align-items:center;gap:0;flex-wrap:wrap}.sheet img{display:block;object-fit:contain}.hint{color:#607487;font-size:13px}@media print{body{margin:0}.toolbar{display:none}.sheet{display:block;width:100%;height:100%}.sheet img{width:100%;height:100%;object-fit:contain;page-break-after:always}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print selected copies</button><p id="info"></p><p class="hint">Choose Epson Universal Driver. Confirm paper size, orientation, paper type and scaling in the driver dialog. Driver-supported paper sizes may differ from the custom page size.</p></div><div class="sheet" id="sheet"><img id="photo" alt="Photo to print"></div><script>
+const q=new URLSearchParams(location.search),file=q.get("file"),size=q.get("size")||"4x6",qty=Math.min(500,Math.max(1,Number(q.get("quantity")||1))),w=Number(q.get("width")),h=Number(q.get("height")),orientation=q.get("orientation")||"vertical";
+const dims={"4x6":[4,6],"5x7":[5,7],"6x8":[6,8],"8x12":[8,12],"passport":[1.38,1.77],"a4":[8.27,11.69]};
+let d=size==="custom"&&w>0&&h>0?[w,h]:(dims[size]||dims["4x6"]);if(orientation==="horizontal")d=[d[1],d[0]];
+document.getElementById("info").textContent=`Size: ${size.toUpperCase()} (${d[0]} × ${d[1]} inches) · Orientation: ${orientation} · Copies: ${qty}.`;
+const style=document.createElement("style");
+style.textContent=`
+@page { size: ${d[0]}in ${d[1]}in; margin: 0; }
+@media print {
+  html, body { width: ${d[0]}in !important; height: ${d[1]}in !important; margin: 0 !important; padding: 0 !important; }
+  .sheet { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; width: ${d[0]}in !important; height: ${d[1]}in !important; margin: 0 !important; padding: 0 !important; }
+  .sheet img { display: block !important; width: calc(${d[0]}in - 4mm) !important; height: calc(${d[1]}in - 4mm) !important; max-width: none !important; max-height: none !important; object-fit: contain !important; margin: 0 auto !important; padding: 0 !important; page-break-after: always; break-after: page; }
+  .sheet img:last-child { page-break-after: auto; break-after: auto; }
+}`;
+document.head.appendChild(style);
+const sheet=document.getElementById("sheet");
+for(let i=0;i<qty;i++){const img=document.createElement("img");img.src=file;img.alt="Photo copy "+(i+1);sheet.appendChild(img)}
+document.getElementById("photo").remove();
+document.title=`PhotoPrint ${d[0]}x${d[1]} - ${qty} copies`;
+</script></body></html>

@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoPrint | Order Photos</title><link rel="stylesheet" href="/style.css"></head>
+<body><header><div class="brand">PHOTO<span>PRINT</span></div><a href="/admin.html">Studio Admin</a></header>
+<main class="wrap"><section class="hero"><div><p class="eyebrow">YOUR PHOTO LAB, ONLINE</p><h1>Print your memories.<br><em>Simply and beautifully.</em></h1><p>Upload photos, choose print sizes and send your order to our studio.</p></div><div class="hero-mark">PP</div></section>
+<form id="orderForm" class="panel">
+<h2>Place a photo order</h2><div class="grid">
+<label>Customer name<input name="customerName" required placeholder="Your name"></label>
+<label>Mobile number<input name="phone" required inputmode="tel" placeholder="10-digit mobile number"></label>
+</div>
+<label class="upload"> <strong>Choose photos</strong><span>JPG, PNG or other image files · up to 20 photos · 15 MB each. Custom sizes up to 24 × 24 inches; studio confirms custom pricing.</span><input id="photos" type="file" accept="image/*" multiple required></label>
+<div id="photoList" class="photo-list"></div>
+<label>Notes (optional)<textarea name="notes" rows="2" placeholder="Any special instructions?"></textarea></label>
+<div class="total-row"><span>Estimated total</span><strong id="total">₹0</strong></div>
+<button class="primary" type="submit">Submit order</button><p class="hint">Demo version: online payment is not connected yet. Your order will be saved as UNPAID for studio review.</p>
+<div id="message" role="status"></div></form>
+<footer>PhotoPrint Studio · Secure photo ordering</footer></main><script src="/customer.js"></script></body></html>
