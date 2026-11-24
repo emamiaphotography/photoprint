@@ -9,8 +9,10 @@ const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const UPLOADS = path.join(ROOT, "uploads");
 const DATA = path.join(ROOT, "orders.json");
+const STUDIO_DATA = path.join(ROOT, "studio.json");
 fs.mkdirSync(UPLOADS, { recursive: true });
 if (!fs.existsSync(DATA)) fs.writeFileSync(DATA, "[]");
+if (!fs.existsSync(STUDIO_DATA)) fs.writeFileSync(STUDIO_DATA, JSON.stringify({ studioName: "Emamia Studios", address: "", mobile: "", whatsapp: "", email: "", website: "", gst: "", logoUrl: "/emamia-logo.png" }, null, 2));
 
 app.use(express.json());
 app.use(express.static(path.join(ROOT, "public")));
@@ -34,8 +36,40 @@ const upload = multer({
 
 function readOrders() { return JSON.parse(fs.readFileSync(DATA, "utf8")); }
 function writeOrders(items) { fs.writeFileSync(DATA, JSON.stringify(items, null, 2)); }
+function readStudio() { return JSON.parse(fs.readFileSync(STUDIO_DATA, "utf8")); }
+function writeStudio(profile) { fs.writeFileSync(STUDIO_DATA, JSON.stringify(profile, null, 2)); }
+function adminAuthorized(req) {
+  const key = req.headers["x-admin-key"] || req.query.key;
+  return Boolean(process.env.ADMIN_KEY) && key === process.env.ADMIN_KEY || !process.env.ADMIN_KEY && key === "change-this-admin-key";
+}
 
 app.get("/api/health", (_, res) => res.json({ ok: true, app: "PhotoPrint MVP" }));
+app.get("/api/studio", (_, res) => res.json(readStudio()));
+
+app.get("/api/admin/studio", (req, res) => {
+  if (!adminAuthorized(req)) return res.status(401).json({ error: "Unauthorized" });
+  res.json(readStudio());
+});
+
+app.put("/api/admin/studio", (req, res) => {
+  if (!adminAuthorized(req)) return res.status(401).json({ error: "Unauthorized" });
+  const current = readStudio();
+  const fields = ["studioName", "address", "mobile", "whatsapp", "email", "website", "gst"];
+  for (const field of fields) {
+    if (typeof req.body[field] === "string") current[field] = req.body[field].trim().slice(0, 500);
+  }
+  writeStudio(current);
+  res.json({ ok: true, profile: current });
+});
+
+app.post("/api/admin/studio/logo", upload.single("logo"), (req, res) => {
+  if (!adminAuthorized(req)) return res.status(401).json({ error: "Unauthorized" });
+  if (!req.file) return res.status(400).json({ error: "Please choose an image logo." });
+  const profile = readStudio();
+  profile.logoUrl = `/uploads/${req.file.filename}`;
+  writeStudio(profile);
+  res.json({ ok: true, logoUrl: profile.logoUrl });
+});
 
 app.post("/api/orders", upload.array("photos", 20), (req, res) => {
   try {
@@ -68,14 +102,12 @@ app.post("/api/orders", upload.array("photos", 20), (req, res) => {
 });
 
 app.get("/api/admin/orders", (req, res) => {
-  const key = req.headers["x-admin-key"] || req.query.key;
-  if (key !== (process.env.ADMIN_KEY || "change-this-admin-key")) return res.status(401).json({ error: "Unauthorized" });
+  if (!adminAuthorized(req)) return res.status(401).json({ error: "Unauthorized" });
   res.json(readOrders());
 });
 
 app.patch("/api/admin/orders/:id", (req, res) => {
-  const key = req.headers["x-admin-key"];
-  if (key !== (process.env.ADMIN_KEY || "change-this-admin-key")) return res.status(401).json({ error: "Unauthorized" });
+  if (!adminAuthorized(req)) return res.status(401).json({ error: "Unauthorized" });
   const allowed = ["UNPAID", "PAID", "REFUNDED"];
   const statuses = ["NEW", "APPROVED", "PRINTING", "COMPLETED", "DELIVERED", "CANCELLED"];
   const orders = readOrders();
